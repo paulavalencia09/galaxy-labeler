@@ -228,3 +228,10 @@ kaggle.json
 # Descargas pesadas
 *.zip
 data/raw/
+
+# Notebooks de experimentación
+scripts/*.ipynb
+.ipynb_checkpoints/
+
+# Imágenes generadas para pruebas
+data/test*/
