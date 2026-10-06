@@ -3,12 +3,14 @@ from zipfile import ZipFile
 import random
 from PIL import Image, UnidentifiedImageError
 import shutil
+import hashlib
+from io import BytesIO
 
 #Obtener imágenes zip
 
 def obtener_imagenes(zip_path):
     with ZipFile(zip_path, 'r') as zf:
-        #Extraer 30 archivos aleatorios del archivo zip
+        #Extraer 350 archivos aleatorios del archivo zip
         zip_names = zf.namelist()
 
         print(f"Archivos dentro del ZIP: {len(zip_names)}")
@@ -32,42 +34,52 @@ def obtener_imagenes(zip_path):
 
 #------------------------------------------------------------------
 
-def seleccionar_img(imagenes,SEED, SAMPLE_SIZE):
+def seleccionar_img(imagenes,SEED):
     imagenes_mezcladas = imagenes.copy()
 
     generador = random.Random(SEED)
     generador.shuffle(imagenes_mezcladas)
 
-    muestra_piloto = imagenes_mezcladas[:SAMPLE_SIZE]
-
-    print(f"Imágenes seleccionadas: {len(muestra_piloto)}")
-
-    for nombre in muestra_piloto:
-        print(Path(nombre).name)
-
-    return muestra_piloto
+    return imagenes_mezcladas
 
 #------------------------------------------------------------------
 
-def validar_img(muestra_piloto, zip_path):
+def validar_img(imagenes_candidatas,zip_path,sample_size,):
     imagenes_validas = []
     imagenes_invalidas = []
+    imagenes_duplicadas = []
+
+    hashes_encontrados = {}
 
     with ZipFile(zip_path, mode="r") as archivo_zip:
-        for nombre in muestra_piloto:
-            try:
-                with archivo_zip.open(nombre) as archivo:
-                    with Image.open(archivo) as imagen:
-                        imagen.verify()
+        for nombre in imagenes_candidatas:
+            if len(imagenes_validas) == sample_size:
+                break
 
+            try:
+                datos = archivo_zip.read(nombre)
+
+                hash_imagen = hashlib.sha256(datos).hexdigest()
+
+                if hash_imagen in hashes_encontrados:
+                    imagenes_duplicadas.append((nombre,hashes_encontrados[hash_imagen],))
+                    continue
+
+                with Image.open(BytesIO(datos)) as imagen:
+                    imagen.verify()
+
+                hashes_encontrados[hash_imagen] = nombre
                 imagenes_validas.append(nombre)
 
-            except (UnidentifiedImageError, OSError, KeyError) as error:
+            except (UnidentifiedImageError,OSError,KeyError,) as error:
                 imagenes_invalidas.append((nombre, str(error)))
 
-    print(f"Imágenes revisadas: {len(muestra_piloto)}")
     print(f"Imágenes válidas: {len(imagenes_validas)}")
     print(f"Imágenes inválidas: {len(imagenes_invalidas)}")
+    print(f"Duplicados exactos: "f"{len(imagenes_duplicadas)}")
+
+    if len(imagenes_validas) < sample_size:
+        raise RuntimeError(f"No fue posible obtener {sample_size} ""imágenes válidas y únicas.")
 
     return imagenes_validas
 
@@ -93,7 +105,12 @@ def extraer_img(carpeta_test, zip_path, imagenes_validas):
 
             extraidas.append(destino)
 
-    imagenes_en_carpeta = list(carpeta_test.glob("*.jpg"))
+    imagenes_en_carpeta = [archivo for archivo in carpeta_test.iterdir() if archivo.is_file() and archivo.suffix.lower() in {".jpg", ".jpeg"}]
+
+    if len(imagenes_en_carpeta) != len(imagenes_validas):
+        raise RuntimeError(
+            "La cantidad final de archivos no coincide "
+            "con la muestra validada.")
 
     print(f"Imágenes extraídas ahora: {len(extraidas)}")
     print(f"Total en carpeta test: {len(imagenes_en_carpeta)}")
@@ -112,8 +129,9 @@ def main():
     carpeta_test = Path(OUTPUT_DIR).resolve()
 
     imagenes = obtener_imagenes(zip_path)
-    muestra_piloto = seleccionar_img(imagenes, SEED, SAMPLE_SIZE)
-    imagenes_validas = validar_img(muestra_piloto, zip_path)
+    imagenes_candidatas = seleccionar_img(imagenes,SEED,)
+
+    imagenes_validas = validar_img(imagenes_candidatas,zip_path,SAMPLE_SIZE,)
     extraer_img(carpeta_test, zip_path, imagenes_validas)
 
     #------------------------------------------------------------------
