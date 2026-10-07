@@ -235,3 +235,14 @@ scripts/*.ipynb
 
 # Imágenes generadas para pruebas
 data/test*/
+
+# Dataset local
+data/img/
+data/img_test/
+data/img_valid/
+
+# Progreso local
+db/*.csv
+
+# Exportaciones generadas
+resultados/
