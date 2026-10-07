@@ -3,6 +3,7 @@ from tkinter import filedialog, messagebox
 import customtkinter as ctk
 from PIL import Image
 from storage import (guardar_etiquetas,cargar_etiquetas,exportar_resultados,)
+from widgets.label_table import LabelTable
 
 
 from config import (
@@ -18,7 +19,6 @@ from config import (
     COLOR_TEXTO_SECUNDARIO,
     COLOR_PELIGRO,
     COLOR_BORDE,
-    COLORES_ETIQUETAS,
 )
 
 from img_effects import (crear_fondo_boton_navegacion,crear_fondo_boton_csv,crear_imagen_con_glow,
@@ -346,128 +346,17 @@ class GalaxyLabeler(ctk.CTk):
 #-----------------------------------------------------------------------------
 
         # Tabla personalizada paginada.
-        self.registros_por_pagina = 6
-        self.pagina_tabla = 0
-
-        self.frame_tabla_nueva = ctk.CTkFrame(
+        self.tabla_etiquetas = LabelTable(
             self.contenido,
-            fg_color="#0D0A20",
-            border_width=1,
-            border_color="#3B2C7A",
-            corner_radius=9,
+            on_ver=self.mostrar_desde_tabla,
+            on_borrar=self.borrar_desde_tabla,
+            registros_por_pagina=6,
         )
-        self.frame_tabla_nueva.pack(
+        self.tabla_etiquetas.pack(
             padx=32,
             pady=(0, 20),
             fill="x",
         )
-
-        self.encabezado_tabla_nueva = ctk.CTkFrame(
-            self.frame_tabla_nueva,
-            fg_color="#211A4A",
-            corner_radius=8,
-            height=32,
-        )
-        self.encabezado_tabla_nueva.pack(
-            padx=1,
-            pady=1,
-            fill="x",
-        )
-        self.encabezado_tabla_nueva.grid_propagate(False)
-        self.encabezado_tabla_nueva.grid_columnconfigure(0, weight=43)
-        self.encabezado_tabla_nueva.grid_columnconfigure(1, weight=42)
-        self.encabezado_tabla_nueva.grid_columnconfigure(2, weight=15)
-
-        ctk.CTkLabel(
-            self.encabezado_tabla_nueva,
-            text="nombre",
-            anchor="w",
-            text_color="#D8B4FE",
-            font=ctk.CTkFont(family="Segoe UI", size=10, weight="bold"),
-        ).grid(row=0, column=0, sticky="ew", padx=(14, 4))
-
-        ctk.CTkLabel(
-            self.encabezado_tabla_nueva,
-            text="etiqueta",
-            anchor="w",
-            text_color="#D8B4FE",
-            font=ctk.CTkFont(family="Segoe UI", size=10, weight="bold"),
-        ).grid(row=0, column=1, sticky="ew", padx=4)
-
-        ctk.CTkLabel(
-            self.encabezado_tabla_nueva,
-            text="acción",
-            text_color="#D8B4FE",
-            font=ctk.CTkFont(family="Segoe UI", size=10, weight="bold"),
-        ).grid(row=0, column=2, sticky="ew", padx=4)
-
-        self.contenedor_filas = ctk.CTkFrame(
-            self.frame_tabla_nueva,
-            height=192,
-            fg_color="#0D0A20",
-            corner_radius=0,
-        )
-        self.contenedor_filas.pack(
-            padx=1,
-            pady=(0, 1),
-            fill="x",
-        )
-        self.contenedor_filas.grid_columnconfigure(0, weight=1)
-        self.contenedor_filas.grid_propagate(False)
-
-        self.frame_paginacion = ctk.CTkFrame(
-            self.frame_tabla_nueva,
-            fg_color="#0D0A20",
-            corner_radius=0,
-        )
-        self.frame_paginacion.pack(
-            padx=10,
-            pady=(2, 6),
-            fill="x",
-        )
-        self.frame_paginacion.grid_columnconfigure(0, weight=1)
-        self.frame_paginacion.grid_columnconfigure(1, weight=0)
-        self.frame_paginacion.grid_columnconfigure(2, weight=0)
-        self.frame_paginacion.grid_columnconfigure(3, weight=1)
-
-        self.boton_pagina_anterior = ctk.CTkButton(
-            self.frame_paginacion,
-            text="‹",
-            width=28,
-            height=24,
-            corner_radius=6,
-            fg_color=COLOR_SUPERFICIE,
-            hover_color=COLOR_PRIMARIO,
-            border_width=1,
-            border_color=COLOR_BORDE,
-            text_color="#D8B4FE",
-            command=lambda: self.cambiar_pagina_tabla(-1),
-        )
-        self.boton_pagina_anterior.grid(row=0, column=1, padx=4)
-
-        self.indicador_pagina = ctk.CTkLabel(
-            self.frame_paginacion,
-            text="1 / 1",
-            width=60,
-            text_color=COLOR_TEXTO_SECUNDARIO,
-            font=ctk.CTkFont(family="Segoe UI", size=10),
-        )
-        self.indicador_pagina.grid(row=0, column=2, padx=4)
-
-        self.boton_pagina_siguiente = ctk.CTkButton(
-            self.frame_paginacion,
-            text="›",
-            width=28,
-            height=24,
-            corner_radius=6,
-            fg_color=COLOR_SUPERFICIE,
-            hover_color=COLOR_PRIMARIO,
-            border_width=1,
-            border_color=COLOR_BORDE,
-            text_color="#D8B4FE",
-            command=lambda: self.cambiar_pagina_tabla(1),
-        )
-        self.boton_pagina_siguiente.grid(row=0, column=3, sticky="w", padx=4)
 #------------------------------------------------------------------------------
 
         fondo_csv = crear_fondo_boton_csv("#9D7BFF","#E65AC5",)
@@ -509,144 +398,6 @@ class GalaxyLabeler(ctk.CTk):
 
         
 
-    def crear_fila_tabla_nueva(self, nombre, etiqueta, indice):
-        color_fondo, color_texto = COLORES_ETIQUETAS.get(
-            etiqueta,
-            ("#1F2937", COLOR_TEXTO_SECUNDARIO),
-        )
-        color_fila = "#100D2B" if indice % 2 == 0 else "#0B091D"
-
-        fila = ctk.CTkFrame(
-            self.contenedor_filas,
-            height=31,
-            fg_color=color_fila,
-            corner_radius=0,
-        )
-        fila.grid(row=indice, column=0, sticky="ew", pady=(0, 1))
-        fila.grid_propagate(False)
-        fila.grid_columnconfigure(0, weight=43)
-        fila.grid_columnconfigure(1, weight=42)
-        fila.grid_columnconfigure(2, weight=15)
-
-        ctk.CTkLabel(
-            fila,
-            text=nombre,
-            anchor="w",
-            text_color="#E5E7EB",
-            font=ctk.CTkFont(family="Segoe UI", size=10),
-        ).grid(row=0, column=0, sticky="ew", padx=(14, 4))
-
-        contenedor_etiqueta = ctk.CTkFrame(
-            fila,
-            fg_color="transparent",
-        )
-        contenedor_etiqueta.grid(row=0, column=1, sticky="w", padx=4)
-
-        etiqueta_visual = ctk.CTkLabel(
-            contenedor_etiqueta,
-            text=etiqueta,
-            height=20,
-            corner_radius=5,
-            fg_color=color_fondo,
-            text_color=color_texto,
-            font=ctk.CTkFont(family="Segoe UI", size=9),
-        )
-        etiqueta_visual.pack(ipadx=7)
-
-        acciones = ctk.CTkFrame(fila, fg_color="transparent")
-        acciones.grid(row=0, column=2)
-
-        boton_ver = ctk.CTkButton(
-            acciones,
-            text="◉",
-            width=24,
-            height=24,
-            corner_radius=6,
-            fg_color="transparent",
-            hover_color="#123A5A",
-            text_color=COLOR_CELESTE,
-            font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
-            command=lambda nombre=nombre: self.mostrar_desde_tabla(nombre),
-        )
-        boton_ver.pack(side="left", padx=(0, 1))
-
-        boton_borrar = ctk.CTkButton(
-            acciones,
-            text="✕",
-            width=24,
-            height=24,
-            corner_radius=6,
-            fg_color="transparent",
-            hover_color="#701A4F",
-            text_color=COLOR_ROSADO,
-            font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"),
-            command=lambda nombre=nombre: self.borrar_desde_tabla(nombre),
-        )
-        boton_borrar.pack(side="left", padx=(1, 0))
-
-    def refrescar_tabla_nueva(self):
-        for widget in self.contenedor_filas.winfo_children():
-            widget.destroy()
-
-        registros = list(self.etiquetas.items())
-        total_registros = len(registros)
-        total_paginas = max(
-            1,
-            (total_registros + self.registros_por_pagina - 1)
-            // self.registros_por_pagina,
-        )
-
-        self.pagina_tabla = min(self.pagina_tabla, total_paginas - 1)
-        self.pagina_tabla = max(self.pagina_tabla, 0)
-
-        inicio = self.pagina_tabla * self.registros_por_pagina
-        fin = inicio + self.registros_por_pagina
-
-        for indice, (nombre, etiqueta) in enumerate(registros[inicio:fin]):
-            self.crear_fila_tabla_nueva(nombre, etiqueta, indice)
-
-        self.indicador_pagina.configure(
-            text=f"{self.pagina_tabla + 1} / {total_paginas}"
-        )
-
-        estado_anterior = "normal" if self.pagina_tabla > 0 else "disabled"
-        estado_siguiente = (
-            "normal" if self.pagina_tabla < total_paginas - 1 else "disabled"
-        )
-
-        self.boton_pagina_anterior.configure(state=estado_anterior)
-        self.boton_pagina_siguiente.configure(state=estado_siguiente)
-
-    def cambiar_pagina_tabla(self, desplazamiento):
-        total_registros = len(self.etiquetas)
-        total_paginas = max(
-            1,
-            (total_registros + self.registros_por_pagina - 1)
-            // self.registros_por_pagina,
-        )
-
-        nueva_pagina = self.pagina_tabla + desplazamiento
-
-        if 0 <= nueva_pagina < total_paginas:
-            self.pagina_tabla = nueva_pagina
-            self.refrescar_tabla_nueva()
-
-    def actualizar_fila_tabla_nueva(self, nombre, etiqueta):
-        total_registros = len(self.etiquetas)
-        self.pagina_tabla = max(
-            0,
-            (total_registros - 1) // self.registros_por_pagina,
-        )
-        self.refrescar_tabla_nueva()
-
-    def eliminar_fila_tabla_nueva(self, nombre):
-        self.refrescar_tabla_nueva()
-
-    def limpiar_tabla_nueva(self):
-        self.pagina_tabla = 0
-        self.refrescar_tabla_nueva()
-
-
     def seleccionar_carpeta(self):
         carpeta_seleccionada = filedialog.askdirectory(title="Seleccionar carpeta de imágenes")
         #carpeta_seleccionada = Path(__file__).resolve().parent.parent / "data" / "img"
@@ -680,7 +431,7 @@ class GalaxyLabeler(ctk.CTk):
             self.imagen_ctk = None
             self.etiqueta_actual.set("")
             self.etiquetas.clear()
-            self.limpiar_tabla_nueva()
+            self.tabla_etiquetas.limpiar()
             return
 
         self.cargar_progreso()
@@ -727,7 +478,10 @@ class GalaxyLabeler(ctk.CTk):
 
         nombre = ruta_actual.name
 
-        self.actualizar_fila_tabla_nueva(nombre, etiqueta)
+        self.tabla_etiquetas.actualizar(
+            self.etiquetas,
+            mostrar_ultima=True,
+        )
 
         self.actualizar_contador()
         self.guardar_progreso()
@@ -742,7 +496,7 @@ class GalaxyLabeler(ctk.CTk):
         self.etiquetas.pop(ruta_actual.name, None)
         self.etiqueta_actual.set("")
 
-        self.eliminar_fila_tabla_nueva(ruta_actual.name)
+        self.tabla_etiquetas.actualizar(self.etiquetas)
 
         self.actualizar_contador()
         self.guardar_progreso()
@@ -762,7 +516,7 @@ class GalaxyLabeler(ctk.CTk):
     def borrar_desde_tabla(self,name):
         self.etiquetas.pop(name, None)
 
-        self.eliminar_fila_tabla_nueva(name)
+        self.tabla_etiquetas.actualizar(self.etiquetas)
 
         if self.rutas_imagenes:
             ruta_actual= self.rutas_imagenes[self.indice_actual]
@@ -847,12 +601,12 @@ class GalaxyLabeler(ctk.CTk):
 
     def cargar_progreso(self):
         self.etiquetas.clear()
-        self.limpiar_tabla_nueva()
+        self.tabla_etiquetas.limpiar()
 
         etiquetas_guardadas = cargar_etiquetas(self.rutas_imagenes)
 
         self.etiquetas.update(etiquetas_guardadas)
-        self.refrescar_tabla_nueva()
+        self.tabla_etiquetas.actualizar(self.etiquetas)
 
     def borrar_todo(self):
         if not self.etiquetas:
@@ -866,7 +620,7 @@ class GalaxyLabeler(ctk.CTk):
 
         self.etiquetas.clear()
 
-        self.limpiar_tabla_nueva()
+        self.tabla_etiquetas.limpiar()
 
         self.etiqueta_actual.set("")
         self.actualizar_contador()
