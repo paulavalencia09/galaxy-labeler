@@ -29,74 +29,12 @@ class GalaxyLabeler(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("Galaxy Labeler")
-        self.geometry("900x800")
-
-        self.configure(fg_color=COLOR_FONDO)
-        self.minsize(800, 700)
-
-        self.rutas_imagenes = []
-        self.indice_actual = 0
-        self.etiquetas = {}
-        self.etiqueta_actual = ctk.StringVar(value="")
-        self.ruta_carpeta = ctk.StringVar(value="")
-
-        self.contenido = ctk.CTkScrollableFrame(self,fg_color=COLOR_FONDO,corner_radius=0,scrollbar_button_color=COLOR_BORDE,scrollbar_button_hover_color=COLOR_PRIMARIO,)
-        self.contenido.pack(fill="both",expand=True,)
-
-        self.title_labeler = ctk.CTkLabel(self.contenido,text="✧  Galaxy Labeler  ✧",text_color=COLOR_TEXTO,font=ctk.CTkFont(family="Segoe UI",size=28,weight="bold",),)
-        self.title_labeler.pack(pady=(24, 2),)
-
-        self.estado = ctk.CTkLabel(
-        self.contenido,text="No se ha seleccionado ninguna carpeta.",text_color=COLOR_TEXTO_SECUNDARIO,font=ctk.CTkFont(family="Segoe UI",size=11,),)
-        self.estado.pack(pady=(0, 14),)
-
-        self.frame_carpeta = ctk.CTkFrame(self.contenido,fg_color="transparent",)
-        self.frame_carpeta.pack(fill="x",padx=32,pady=(4, 14),)
-
-        self.boton_carpeta = ctk.CTkButton(self.frame_carpeta,
-                            text="▣  Seleccionar carpeta",
-                            command=self.seleccionar_carpeta,
-                            width=155,
-                            height=34,
-                            corner_radius=8,
-                            fg_color=COLOR_PRIMARIO,
-                            hover_color=COLOR_PRIMARIO_HOVER,
-                            text_color=COLOR_TEXTO,
-                            font=ctk.CTkFont(
-                                family="Segoe UI",
-                                size=12,
-                                weight="bold",),)
-        self.boton_carpeta.pack(side="left",padx=(0, 12),)
-
-        self.input_carpeta = ctk.CTkEntry(self.frame_carpeta,
-            textvariable=self.ruta_carpeta,
-            state="disabled",
-            height=34,
-            corner_radius=7,
-            fg_color=COLOR_SUPERFICIE,
-            border_color=COLOR_BORDE,
-            border_width=1,
-            text_color=COLOR_TEXTO_SECUNDARIO,
-            font=ctk.CTkFont(
-                family="Segoe UI",
-                size=10,),)
-        self.input_carpeta.pack(side="left",fill="x",expand=True,)
-
-        self.nombre_imagen = ctk.CTkLabel(self.contenido,
-            text="",
-            text_color="#D8B4FE",
-            font=ctk.CTkFont(
-                family="Segoe UI",
-                size=18,
-                weight="bold",),
-                )
-        self.nombre_imagen.pack(pady=(4, 10),)
-
-
-
-        self.frame_visualizador = ctk.CTkFrame(self.contenido,fg_color="transparent",)
-        self.frame_visualizador.pack(pady=(4, 14),)
+        self.configurar_ventana()
+        self.inicializar_estado()
+        self.crear_contenedor_principal()
+        self.crear_encabezado()
+        self.crear_selector_carpeta()
+        self.crear_visualizador_imagen()
 
 
 
@@ -244,105 +182,6 @@ class GalaxyLabeler(ctk.CTk):
     border_color=COLOR_BORDE,
     text_color=COLOR_TEXTO_SECUNDARIO,)
 
-        #-----------------------------------------------------------------------------
-
-        fondo_navegacion = crear_fondo_boton_navegacion(
-            "#211F5A",
-            "#7C3AED",
-        )
-        fondo_navegacion_hover = crear_fondo_boton_navegacion(
-            "#312E81",
-            "#A855F7",
-        )
-
-        self.imagen_navegacion = ctk.CTkImage(
-            light_image=fondo_navegacion,
-            dark_image=fondo_navegacion,
-            size=(82, 82),
-        )
-        self.imagen_navegacion_hover = ctk.CTkImage(
-            light_image=fondo_navegacion_hover,
-            dark_image=fondo_navegacion_hover,
-            size=(82, 82),
-        )
-
-        self.boton_anterior = ctk.CTkLabel(
-            self.frame_visualizador,
-            text="❮",
-            image=self.imagen_navegacion,
-            compound="center",
-            fg_color="transparent",
-            text_color="#C084FC",
-            font=ctk.CTkFont(
-                family="Segoe UI Symbol",
-                size=25,
-                weight="bold",
-            ),
-            cursor="hand2",
-        )
-        self.boton_anterior.pack(side="left",padx=(0, 28),)
-
-        """self.frame_glow_imagen = ctk.CTkFrame(self.frame_visualizador,
-                                    fg_color=COLOR_GLOW_EXTERIOR,
-                                    border_width=3,
-                                    border_color=COLOR_GLOW_MEDIO,
-                                    corner_radius=17,)
-        self.frame_glow_imagen.pack(side="left")
-
-
-        self.frame_borde_imagen = ctk.CTkFrame(self.frame_glow_imagen,
-                                    fg_color=COLOR_SUPERFICIE,
-                                    border_width=3,
-                                    border_color=COLOR_GLOW_CLARO,
-                                    corner_radius=12,)
-        self.frame_borde_imagen.pack(padx=8,pady=8,)"""
-
-        self.visor_imagen = ctk.CTkLabel(self.frame_visualizador,
-                            text="Aquí se mostrará la imagen",
-                            text_color=COLOR_TEXTO_SECUNDARIO,
-                            fg_color=COLOR_FONDO,
-                            corner_radius=9,)
-        self.visor_imagen.pack(side="left", padx=6, pady=6)
-
-        self.boton_siguiente = ctk.CTkLabel(
-                            self.frame_visualizador,
-                            text="❯",
-                            image=self.imagen_navegacion,
-                            compound="center",
-                            fg_color="transparent",
-                            text_color="#C084FC",
-                            font=ctk.CTkFont(
-                                    family="Segoe UI Symbol",
-                                    size=25,
-                                    weight="bold",),
-                            cursor="hand2",)
-        self.boton_siguiente.pack(side="left",padx=(28, 0),)
-
-        self.boton_anterior.bind(
-            "<Button-1>",
-            lambda evento: self.imagen_anterior(),
-        )
-        self.boton_siguiente.bind(
-            "<Button-1>",
-            lambda evento: self.imagen_siguiente(),
-        )
-
-        for boton in (self.boton_anterior, self.boton_siguiente):
-            boton.bind(
-                "<Enter>",
-                lambda evento, boton=boton: boton.configure(
-                    image=self.imagen_navegacion_hover
-                ),
-            )
-            boton.bind(
-                "<Leave>",
-                lambda evento, boton=boton: boton.configure(
-                    image=self.imagen_navegacion
-                ),
-            )
-
-        
-
 #-----------------------------------------------------------------------------
 
         # Tabla personalizada paginada.
@@ -397,6 +236,222 @@ class GalaxyLabeler(ctk.CTk):
         )
 
         
+
+    def configurar_ventana(self):
+        self.title("Galaxy Labeler")
+        self.geometry("900x800")
+        self.configure(fg_color=COLOR_FONDO)
+        self.minsize(800, 700)
+
+    def inicializar_estado(self):
+        self.rutas_imagenes = []
+        self.indice_actual = 0
+        self.etiquetas = {}
+        self.etiqueta_actual = ctk.StringVar(value="")
+        self.ruta_carpeta = ctk.StringVar(value="")
+
+    def crear_contenedor_principal(self):
+        self.contenido = ctk.CTkScrollableFrame(
+            self,
+            fg_color=COLOR_FONDO,
+            corner_radius=0,
+            scrollbar_button_color=COLOR_BORDE,
+            scrollbar_button_hover_color=COLOR_PRIMARIO,
+        )
+        self.contenido.pack(fill="both", expand=True)
+
+    def crear_encabezado(self):
+        self.title_labeler = ctk.CTkLabel(
+            self.contenido,
+            text="✧  Galaxy Labeler  ✧",
+            text_color=COLOR_TEXTO,
+            font=ctk.CTkFont(
+                family="Segoe UI",
+                size=28,
+                weight="bold",
+            ),
+        )
+        self.title_labeler.pack(pady=(24, 2))
+
+        self.estado = ctk.CTkLabel(
+            self.contenido,
+            text="No se ha seleccionado ninguna carpeta.",
+            text_color=COLOR_TEXTO_SECUNDARIO,
+            font=ctk.CTkFont(
+                family="Segoe UI",
+                size=11,
+            ),
+        )
+        self.estado.pack(pady=(0, 14))
+
+    def crear_selector_carpeta(self):
+        self.frame_carpeta = ctk.CTkFrame(
+            self.contenido,
+            fg_color="transparent",
+        )
+        self.frame_carpeta.pack(
+            fill="x",
+            padx=32,
+            pady=(4, 14),
+        )
+
+        self.boton_carpeta = ctk.CTkButton(
+            self.frame_carpeta,
+            text="▣  Seleccionar carpeta",
+            command=self.seleccionar_carpeta,
+            width=155,
+            height=34,
+            corner_radius=8,
+            fg_color=COLOR_PRIMARIO,
+            hover_color=COLOR_PRIMARIO_HOVER,
+            text_color=COLOR_TEXTO,
+            font=ctk.CTkFont(
+                family="Segoe UI",
+                size=12,
+                weight="bold",
+            ),
+        )
+        self.boton_carpeta.pack(
+            side="left",
+            padx=(0, 12),
+        )
+
+        self.input_carpeta = ctk.CTkEntry(
+            self.frame_carpeta,
+            textvariable=self.ruta_carpeta,
+            state="disabled",
+            height=34,
+            corner_radius=7,
+            fg_color=COLOR_SUPERFICIE,
+            border_color=COLOR_BORDE,
+            border_width=1,
+            text_color=COLOR_TEXTO_SECUNDARIO,
+            font=ctk.CTkFont(
+                family="Segoe UI",
+                size=10,
+            ),
+        )
+        self.input_carpeta.pack(
+            side="left",
+            fill="x",
+            expand=True,
+        )
+
+    def crear_visualizador_imagen(self):
+        self.nombre_imagen = ctk.CTkLabel(
+            self.contenido,
+            text="",
+            text_color="#D8B4FE",
+            font=ctk.CTkFont(
+                family="Segoe UI",
+                size=18,
+                weight="bold",
+            ),
+        )
+        self.nombre_imagen.pack(pady=(4, 10))
+
+        self.frame_visualizador = ctk.CTkFrame(
+            self.contenido,
+            fg_color="transparent",
+        )
+        self.frame_visualizador.pack(pady=(4, 14))
+
+        fondo_navegacion = crear_fondo_boton_navegacion(
+            "#211F5A",
+            "#7C3AED",
+        )
+        fondo_navegacion_hover = crear_fondo_boton_navegacion(
+            "#312E81",
+            "#A855F7",
+        )
+
+        self.imagen_navegacion = ctk.CTkImage(
+            light_image=fondo_navegacion,
+            dark_image=fondo_navegacion,
+            size=(82, 82),
+        )
+        self.imagen_navegacion_hover = ctk.CTkImage(
+            light_image=fondo_navegacion_hover,
+            dark_image=fondo_navegacion_hover,
+            size=(82, 82),
+        )
+
+        self.boton_anterior = ctk.CTkLabel(
+            self.frame_visualizador,
+            text="❮",
+            image=self.imagen_navegacion,
+            compound="center",
+            fg_color="transparent",
+            text_color="#C084FC",
+            font=ctk.CTkFont(
+                family="Segoe UI Symbol",
+                size=25,
+                weight="bold",
+            ),
+            cursor="hand2",
+        )
+        self.boton_anterior.pack(
+            side="left",
+            padx=(0, 28),
+        )
+
+        self.visor_imagen = ctk.CTkLabel(
+            self.frame_visualizador,
+            text="Aquí se mostrará la imagen",
+            text_color=COLOR_TEXTO_SECUNDARIO,
+            fg_color=COLOR_FONDO,
+            corner_radius=9,
+        )
+        self.visor_imagen.pack(
+            side="left",
+            padx=6,
+            pady=6,
+        )
+
+        self.boton_siguiente = ctk.CTkLabel(
+            self.frame_visualizador,
+            text="❯",
+            image=self.imagen_navegacion,
+            compound="center",
+            fg_color="transparent",
+            text_color="#C084FC",
+            font=ctk.CTkFont(
+                family="Segoe UI Symbol",
+                size=25,
+                weight="bold",
+            ),
+            cursor="hand2",
+        )
+        self.boton_siguiente.pack(
+            side="left",
+            padx=(28, 0),
+        )
+
+        self.boton_anterior.bind(
+            "<Button-1>",
+            lambda evento: self.imagen_anterior(),
+        )
+        self.boton_siguiente.bind(
+            "<Button-1>",
+            lambda evento: self.imagen_siguiente(),
+        )
+
+        for boton in (
+            self.boton_anterior,
+            self.boton_siguiente,
+        ):
+            boton.bind(
+                "<Enter>",
+                lambda evento, boton=boton: boton.configure(
+                    image=self.imagen_navegacion_hover
+                ),
+            )
+            boton.bind(
+                "<Leave>",
+                lambda evento, boton=boton: boton.configure(
+                    image=self.imagen_navegacion
+                ),
+            )
 
     def seleccionar_carpeta(self):
         carpeta_seleccionada = filedialog.askdirectory(title="Seleccionar carpeta de imágenes")
