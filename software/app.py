@@ -1,49 +1,28 @@
 from pathlib import Path
 from tkinter import filedialog, messagebox
 import customtkinter as ctk
-from PIL import Image, ImageDraw, ImageFilter, ImageColor
-import csv
-import shutil
+from PIL import Image
+from storage import (guardar_etiquetas,cargar_etiquetas,exportar_resultados,)
 
 
-VALID_EXTENSIONS = [".jpg", ".jpeg", ".png"]
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-PROGRESS_FILE = PROJECT_ROOT / "db" / "progreso_etiquetas.csv"
-RESULTS_DIR = PROJECT_ROOT / "resultados"
+from config import (
+    VALID_EXTENSIONS,
+    CLASS_FOLDERS,
+    COLOR_FONDO,
+    COLOR_SUPERFICIE,
+    COLOR_PRIMARIO,
+    COLOR_PRIMARIO_HOVER,
+    COLOR_CELESTE,
+    COLOR_ROSADO,
+    COLOR_TEXTO,
+    COLOR_TEXTO_SECUNDARIO,
+    COLOR_PELIGRO,
+    COLOR_BORDE,
+    COLORES_ETIQUETAS,
+)
 
-CLASS_FOLDERS = {
-    "Elíptica": "eliptica",
-    "Lenticular": "lenticular",
-    "Espiral": "espiral",
-    "Irregular": "irregular",
-    "No clasificable": "no_clasificable",
-}
-
-#-----------------------------------------------------------------------------
-COLOR_FONDO = "#080617"
-COLOR_SUPERFICIE = "#14102E"
-COLOR_PRIMARIO = "#7C3AED"
-COLOR_PRIMARIO_HOVER = "#9333EA"
-COLOR_CELESTE = "#38BDF8"
-COLOR_ROSADO = "#EC4899"
-COLOR_TEXTO = "#F8FAFC"
-COLOR_TEXTO_SECUNDARIO = "#8F8AA8"
-COLOR_PELIGRO = "#F43F5E"
-COLOR_BORDE = "#4C1D95"
-
-COLOR_GLOW_EXTERIOR = "#4C1D95"
-COLOR_GLOW_MEDIO = "#8B5CF6"
-COLOR_GLOW_CLARO = "#D8B4FE"
-
-COLORES_ETIQUETAS = {
-    "Elíptica": ("#123A5A", "#38BDF8"),
-    "Lenticular": ("#3B2A68", "#C4B5FD"),
-    "Espiral": ("#4C1D95", "#D8B4FE"),
-    "Irregular": ("#701A4F", "#F9A8D4"),
-    "No clasificable": ("#1F2937", "#8F8AA8"),
-}
-
-
+from img_effects import (crear_fondo_boton_navegacion,crear_fondo_boton_csv,crear_imagen_con_glow,
+)
 #-----------------------------------------------------------------------------
 
 class GalaxyLabeler(ctk.CTk):
@@ -267,11 +246,11 @@ class GalaxyLabeler(ctk.CTk):
 
         #-----------------------------------------------------------------------------
 
-        fondo_navegacion = self.crear_fondo_boton_navegacion(
+        fondo_navegacion = crear_fondo_boton_navegacion(
             "#211F5A",
             "#7C3AED",
         )
-        fondo_navegacion_hover = self.crear_fondo_boton_navegacion(
+        fondo_navegacion_hover = crear_fondo_boton_navegacion(
             "#312E81",
             "#A855F7",
         )
@@ -491,8 +470,8 @@ class GalaxyLabeler(ctk.CTk):
         self.boton_pagina_siguiente.grid(row=0, column=3, sticky="w", padx=4)
 #------------------------------------------------------------------------------
 
-        fondo_csv = self.crear_fondo_boton_csv("#9D7BFF","#E65AC5",)
-        fondo_csv_hover = self.crear_fondo_boton_csv("#B69AFF","#F472D0",)
+        fondo_csv = crear_fondo_boton_csv("#9D7BFF","#E65AC5",)
+        fondo_csv_hover = crear_fondo_boton_csv("#B69AFF","#F472D0",)
 
         self.imagen_csv = ctk.CTkImage(light_image=fondo_csv,dark_image=fondo_csv,size=(180, 78),)
         self.imagen_csv_hover = ctk.CTkImage(light_image=fondo_csv_hover,dark_image=fondo_csv_hover,size=(180, 78),)
@@ -667,120 +646,6 @@ class GalaxyLabeler(ctk.CTk):
         self.pagina_tabla = 0
         self.refrescar_tabla_nueva()
 
-    def crear_fondo_boton_navegacion(self, color_circulo, color_glow):
-        escala = 2
-        diametro = 54 * escala
-        margen = 14 * escala
-        tamaño = diametro + margen * 2
-
-        mascara = Image.new("L", (tamaño, tamaño), 0)
-        dibujo_mascara = ImageDraw.Draw(mascara)
-        dibujo_mascara.ellipse(
-            (margen, margen, margen + diametro, margen + diametro),
-            fill=255,
-        )
-
-        mascara_glow = mascara.filter(
-            ImageFilter.GaussianBlur(8 * escala)
-        )
-        mascara_glow = mascara_glow.point(
-            lambda valor: int(valor * 0.55)
-        )
-
-        rgb_glow = ImageColor.getrgb(color_glow)
-        capa_glow = Image.new(
-            "RGBA",
-            (tamaño, tamaño),
-            (*rgb_glow, 0),
-        )
-        capa_glow.putalpha(mascara_glow)
-
-        resultado = Image.new("RGBA", (tamaño, tamaño), (0, 0, 0, 0))
-        resultado = Image.alpha_composite(resultado, capa_glow)
-
-        rgb_circulo = ImageColor.getrgb(color_circulo)
-        circulo = Image.new(
-            "RGBA",
-            (diametro, diametro),
-            (*rgb_circulo, 255),
-        )
-        mascara_circulo = Image.new("L", (diametro, diametro), 0)
-        ImageDraw.Draw(mascara_circulo).ellipse(
-            (0, 0, diametro - 1, diametro - 1),
-            fill=255,
-        )
-        resultado.paste(
-            circulo,
-            (margen, margen),
-            mascara_circulo,
-        )
-
-        ImageDraw.Draw(resultado).ellipse(
-            (
-                margen,
-                margen,
-                margen + diametro - 1,
-                margen + diametro - 1,
-            ),
-            outline=(49, 46, 129, 255),
-            width=escala,
-        )
-
-        return resultado
-
-    def crear_fondo_boton_csv(self, color_superior, color_inferior):
-        escala = 2
-        ancho = 140 * escala
-        alto = 38 * escala
-        margen = 20 * escala
-        radio = 8 * escala
-
-        tamaño = (ancho + margen * 2,alto + margen * 2,)
-
-        # Máscara con la forma redondeada del botón
-        mascara = Image.new("L", tamaño, 0)
-        dibujo_mascara = ImageDraw.Draw(mascara)
-
-        dibujo_mascara.rounded_rectangle((margen,margen,margen + ancho,margen + alto,),radius=radio,fill=255,)
-
-        # Glow difuminado
-        mascara_glow = mascara.filter(ImageFilter.GaussianBlur(8 * escala))
-
-        mascara_glow = mascara_glow.point(lambda valor: int(valor * 0.45))
-
-        capa_glow = Image.new("RGBA",tamaño,(168, 85, 247, 0),)
-        capa_glow.putalpha(mascara_glow)
-
-        resultado = Image.new("RGBA", tamaño, (0, 0, 0, 0))
-        resultado = Image.alpha_composite(resultado, capa_glow)
-
-        # Degradado violeta a rosado
-        color_inicio = ImageColor.getrgb(color_superior)
-        color_final = ImageColor.getrgb(color_inferior)
-
-        degradado = Image.new("RGBA", (ancho, alto))
-        dibujo_degradado = ImageDraw.Draw(degradado)
-
-        for y in range(alto):
-            proporcion = y / (alto - 1)
-
-            color = tuple(int(color_inicio[i]+ (color_final[i] - color_inicio[i]) * proporcion) for i in range(3))
-
-            dibujo_degradado.line((0, y, ancho, y),fill=(*color, 255),)
-
-        mascara_boton = Image.new("L", (ancho, alto), 0)
-        dibujo_boton = ImageDraw.Draw(mascara_boton)
-
-        dibujo_boton.rounded_rectangle((0, 0, ancho - 1, alto - 1),radius=radio,fill=255,)
-
-        resultado.paste(degradado,(margen, margen),mascara_boton,)
-
-        # Borde luminoso
-        dibujo_resultado = ImageDraw.Draw(resultado)
-
-        dibujo_resultado.rounded_rectangle((margen,margen,margen + ancho - 1,margen + alto - 1,),radius=radio,outline=(233, 184, 255, 255),width=escala,)
-
-        return resultado
 
     def seleccionar_carpeta(self):
         carpeta_seleccionada = filedialog.askdirectory(title="Seleccionar carpeta de imágenes")
@@ -831,91 +696,6 @@ class GalaxyLabeler(ctk.CTk):
 
         self.mostrar_imagen()
 
-
-    def crear_imagen_con_glow(self, imagen):
-        margen = 28
-        desenfoque = 14
-
-        ancho, alto = imagen.size
-        tamaño_final = (
-            ancho + margen * 2,
-            alto + margen * 2,
-        )
-
-        mascara_glow = Image.new(
-            "L",
-            tamaño_final,
-            0,
-        )
-
-        dibujo_mascara = ImageDraw.Draw(mascara_glow)
-
-        dibujo_mascara.rounded_rectangle(
-            (
-                margen - 4,
-                margen - 4,
-                margen + ancho + 4,
-                margen + alto + 4,
-            ),
-            radius=16,
-            fill=230,
-        )
-
-        mascara_glow = mascara_glow.filter(
-            ImageFilter.GaussianBlur(desenfoque)
-        )
-
-        capa_glow = Image.new(
-            "RGBA",
-            tamaño_final,
-            (139, 92, 246, 0),
-        )
-        capa_glow.putalpha(mascara_glow)
-
-        resultado = Image.new(
-            "RGBA",
-            tamaño_final,
-            (0, 0, 0, 0),
-        )
-        resultado = Image.alpha_composite(
-            resultado,
-            capa_glow,
-        )
-
-        mascara_imagen = Image.new(
-            "L",
-            imagen.size,
-            0,
-        )
-
-        dibujo_imagen = ImageDraw.Draw(mascara_imagen)
-        dibujo_imagen.rounded_rectangle(
-            (0, 0, ancho - 1, alto - 1),
-            radius=10,
-            fill=255,
-        )
-
-        resultado.paste(
-            imagen.convert("RGBA"),
-            (margen, margen),
-            mascara_imagen,
-        )
-
-        dibujo_resultado = ImageDraw.Draw(resultado)
-        dibujo_resultado.rounded_rectangle(
-            (
-                margen - 2,
-                margen - 2,
-                margen + ancho + 1,
-                margen + alto + 1,
-            ),
-            radius=12,
-            outline=(192, 132, 252, 255),
-            width=3,
-        )
-
-        return resultado
-
     def mostrar_imagen(self):
         ruta_actual = self.rutas_imagenes[self.indice_actual]
         self.nombre_imagen.configure(text=ruta_actual.name)
@@ -927,7 +707,7 @@ class GalaxyLabeler(ctk.CTk):
             imagen = imagen.copy()
 
             imagen.thumbnail((300, 300), Image.Resampling.LANCZOS)
-            imagen = self.crear_imagen_con_glow(imagen)
+            imagen = crear_imagen_con_glow(imagen)
 
             self.imagen_ctk = ctk.CTkImage(light_image=imagen,dark_image=imagen,size=imagen.size,)
             self.visor_imagen.configure(image=self.imagen_ctk,text="",)
@@ -994,62 +774,67 @@ class GalaxyLabeler(ctk.CTk):
 
     def exportar_csv(self):
         if not self.etiquetas:
-            messagebox.showwarning("Sin etiquetas","No hay imágenes etiquetadas para exportar.",)
+            messagebox.showwarning(
+                "Sin etiquetas",
+                "No hay imágenes etiquetadas para exportar.",
+            )
             return
 
-        etiquetas_desconocidas = (set(self.etiquetas.values()) - set(CLASS_FOLDERS))
+        etiquetas_desconocidas = (
+            set(self.etiquetas.values())
+            - set(CLASS_FOLDERS)
+        )
 
         if etiquetas_desconocidas:
-            messagebox.showerror("Etiquetas desconocidas","Existen etiquetas antiguas o no reconocidas: "+ ", ".join(sorted(etiquetas_desconocidas)),)
+            messagebox.showerror(
+                "Etiquetas desconocidas",
+                (
+                    "Existen etiquetas antiguas o no reconocidas: "
+                    + ", ".join(sorted(etiquetas_desconocidas))
+                ),
+            )
             return
 
-        rutas_por_nombre = {ruta.name: ruta for ruta in self.rutas_imagenes}
+        rutas_por_nombre = {
+            ruta.name: ruta
+            for ruta in self.rutas_imagenes
+        }
 
-        imagenes_faltantes = [ nombre for nombre in self.etiquetas if nombre not in rutas_por_nombre]
+        imagenes_faltantes = [
+            nombre
+            for nombre in self.etiquetas
+            if nombre not in rutas_por_nombre
+        ]
 
         if imagenes_faltantes:
-            messagebox.showerror("Imágenes faltantes","No se encontraron algunas imágenes etiquetadas.",)
+            messagebox.showerror(
+                "Imágenes faltantes",
+                "No se encontraron algunas imágenes etiquetadas.",
+            )
             return
 
-        RESULTS_DIR.mkdir(parents=True,exist_ok=True,)
-
-        carpetas_clases = {}
-
-        for etiqueta, nombre_carpeta in CLASS_FOLDERS.items():
-            carpeta_clase = RESULTS_DIR / nombre_carpeta
-
-            carpeta_clase.mkdir(parents=True,exist_ok=True,)
-
-            carpetas_clases[etiqueta] = carpeta_clase
-
-            # Eliminar solamente copias de exportaciones anteriores.
-            for archivo in carpeta_clase.iterdir():
-                if (archivo.is_file()and archivo.suffix.lower()in VALID_EXTENSIONS):
-                    archivo.unlink()
-
         try:
-            for nombre, etiqueta in self.etiquetas.items():
-                origen = rutas_por_nombre[nombre]
-                destino = carpetas_clases[etiqueta] / nombre
-
-                shutil.copy2(origen, destino)
-
-            ruta_csv = RESULTS_DIR / "etiquetas_galaxias.csv"
-
-            with ruta_csv.open(mode="w",newline="",encoding="utf-8-sig",) as archivo:
-                escritor = csv.writer(archivo)
-                escritor.writerow(["nombre", "etiqueta"])
-
-                for nombre, etiqueta in sorted(self.etiquetas.items()):
-                    escritor.writerow([nombre, etiqueta])
+            ruta_resultados = exportar_resultados(
+                self.etiquetas,
+                self.rutas_imagenes,
+            )
 
         except OSError as error:
-            messagebox.showerror("Error de exportación",f"No se pudo completar la exportación:\n{error}",)
+            messagebox.showerror(
+                "Error de exportación",
+                f"No se pudo completar la exportación:\n{error}",
+            )
             return
 
         messagebox.showinfo(
             "Exportación completada",
-            (f"Se exportaron {len(self.etiquetas)} imágenes "f"en:\n{RESULTS_DIR}"),)
+            (
+                f"Se exportaron {len(self.etiquetas)} imágenes "
+                f"en:\n{ruta_resultados}"
+            ),
+        )
+
+
 
     def actualizar_contador(self):
         cantidad_etiquetadas = len(self.etiquetas)
@@ -1058,35 +843,15 @@ class GalaxyLabeler(ctk.CTk):
         self.estado.configure(text=(f"{cantidad_etiquetadas} de {total_img} imágenes etiquetadas"))
 
     def guardar_progreso(self):
-        with PROGRESS_FILE.open(mode="w",newline="",encoding="utf-8-sig",) as archivo:
-            escritor = csv.writer(archivo)
-            escritor.writerow(["nombre", "etiqueta"])
-
-            for nombre, etiqueta in sorted(self.etiquetas.items()):
-                escritor.writerow([nombre, etiqueta])
+        guardar_etiquetas(self.etiquetas)
 
     def cargar_progreso(self):
         self.etiquetas.clear()
-
         self.limpiar_tabla_nueva()
 
-        if not PROGRESS_FILE.exists():
-            return
+        etiquetas_guardadas = cargar_etiquetas(self.rutas_imagenes)
 
-        nombres_validos = {ruta.name for ruta in self.rutas_imagenes}
-
-        with PROGRESS_FILE.open(mode="r",newline="",encoding="utf-8-sig",) as archivo:
-            lector = csv.DictReader(archivo)
-
-            for fila in lector:
-                nombre = fila["nombre"]
-                etiqueta = fila["etiqueta"]
-
-                if nombre not in nombres_validos or not etiqueta:
-                    continue
-
-                self.etiquetas[nombre] = etiqueta
-
+        self.etiquetas.update(etiquetas_guardadas)
         self.refrescar_tabla_nueva()
 
     def borrar_todo(self):
