@@ -19,6 +19,7 @@ from config import (
     COLOR_TEXTO_SECUNDARIO,
     COLOR_PELIGRO,
     COLOR_BORDE,
+    ICON_PATH,
 )
 
 from img_effects import (crear_fondo_boton_navegacion,crear_fondo_boton_csv,crear_imagen_con_glow,
@@ -28,7 +29,8 @@ from img_effects import (crear_fondo_boton_navegacion,crear_fondo_boton_csv,crea
 class GalaxyLabeler(ctk.CTk):
     def __init__(self):
         super().__init__()
-
+        if ICON_PATH.exists():
+            self.after(200,lambda: self.iconbitmap(str(ICON_PATH)),)
         self.configurar_ventana()
         self.inicializar_estado()
         self.crear_contenedor_principal()

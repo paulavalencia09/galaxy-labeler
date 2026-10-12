@@ -1,7 +1,15 @@
 from pathlib import Path
+import sys
 
 VALID_EXTENSIONS = [".jpg", ".jpeg", ".png"]
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if getattr(sys, "frozen", False):
+    # En el ejecutable, los datos se guardan junto a GalaxyLabeler.exe.
+    PROJECT_ROOT = Path(sys.executable).resolve().parent
+else:
+    # Durante el desarrollo, se conserva la raíz del repositorio.
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RESOURCE_ROOT = Path(getattr(sys, "_MEIPASS", PROJECT_ROOT))
+ICON_PATH = (RESOURCE_ROOT / "software" / "assets" / "galaxi_lab.ico")
 PROGRESS_FILE = PROJECT_ROOT / "db" / "progreso_etiquetas.csv"
 RESULTS_DIR = PROJECT_ROOT / "resultados"
 

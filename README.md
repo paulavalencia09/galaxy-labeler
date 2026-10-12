@@ -2,7 +2,11 @@
 
 Aplicación de escritorio para etiquetar manualmente imágenes de galaxias y generar un dataset clasificado en formato CSV, acompañado de carpetas organizadas por clase.
 
-## Integrante
+## Nombre del proyecto
+
+**Galaxy Labeler: sistema de etiquetado manual de imágenes de galaxias.**
+
+## Integrantes
 
 - Paula Valencia — [@paulavalencia09](https://github.com/paulavalencia09)
 
@@ -42,6 +46,7 @@ El software fue desarrollado para trabajar con una muestra de 350 imágenes obte
 
 El proyecto fue desarrollado y probado con:
 
+- Windows 10 u 11
 - Python 3.14.5
 - CustomTkinter 6.0.0
 - Pillow 12.3.0
@@ -125,9 +130,14 @@ La aplicación se abrirá sin cargar imágenes automáticamente.
 
 ## Uso
 
+### Cargar el dataset
+
 1. Presionar **Seleccionar carpeta**.
 2. Elegir la carpeta que contiene las imágenes, por ejemplo `data/img/`.
 3. Verificar que la ruta, el nombre de la imagen y el contador aparezcan en la interfaz.
+
+### Etiquetar las imágenes
+
 4. Examinar la galaxia mostrada.
 5. Seleccionar una de las cinco etiquetas disponibles.
 6. La clasificación se guardará automáticamente y la aplicación avanzará a la imagen siguiente.
@@ -137,8 +147,13 @@ La aplicación se abrirá sin cargar imágenes automáticamente.
    - La `X` rosada elimina su clasificación.
 9. Utilizar **Borrar etiqueta** para quitar la clasificación de la imagen actual.
 10. Utilizar **Borrar todo** solamente si se desea eliminar todo el progreso guardado.
+
+### Guardar, exportar y finalizar
+
 11. Presionar **Exportar CSV** para generar el archivo final y las carpetas por clase.
 12. Para finalizar, cerrar normalmente la ventana. No es necesario guardar manualmente.
+
+El progreso se guarda automáticamente después de cada cambio. Por ello, se puede cerrar el programa en cualquier momento y continuar posteriormente seleccionando nuevamente la misma carpeta de imágenes.
 
 Si la carpeta seleccionada no contiene imágenes compatibles, la interfaz mostrará un mensaje y no intentará cargar una imagen.
 
